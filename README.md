@@ -12,7 +12,7 @@ func main() {
 		{
 			ObjectType: &corev1.Pod{},
 			Reconciler: &testReconciler{},
-            //Scheme: APi.Scheme, 自定义crd
+                       //Scheme: APi.Scheme, 自定义crd需要自己设置scheme
 		},
 	}
 	watchJob, err := job.NewWatchJob(watchResources)
