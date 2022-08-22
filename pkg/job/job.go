@@ -24,7 +24,6 @@ func NewWatchJob(res []*WatchResource) (*WatchJob, error) {
 	return watchJob, nil
 }
 
-// StartResourceWatch 启动集群监听，如果已经存在对应监听则忽略
 func (w *WatchJob) StartResourceWatch(clusters ...ClusterInfoInterface) context.CancelFunc {
 	return w.doResourceWatch(clusters...)
 }
@@ -35,23 +34,17 @@ func (w *WatchJob) doResourceWatch(clusterInfos ...ClusterInfoInterface) context
 	errChan := make(chan error)
 	// 因为mgr start方法为阻塞方法，所以需要启动协程执行
 	mgr := manager.New()
-	var clusters []*cluster.Cluster
-	for i := range clusterInfos {
-		c := cluster.New(clusterInfos[i].GetClusterName(), GetCfgByClusterInfo(clusterInfos[i]), cluster.Options{})
-		clusters = append(clusters, c)
-	}
+
 	go func() {
 		// 遍历需要监听的列表
 		for i := range w.resources {
 			resource := w.resources[i]
 			co := controller.New(resource.Reconciler, controller.Options{})
-			for j := range clusters {
-				c := clusters[j]
+			for i := range clusterInfos {
+				c := cluster.New(clusterInfos[i].GetClusterName(), GetCfgByClusterInfo(clusterInfos[i]), cluster.Options{})
+				//如果自定义scheme 需要不通的cluster
 				if resource.Scheme != nil {
-					n := &cluster.Cluster{}
-					*n = *c
-					n.SetScheme(resource.Scheme)
-					c = n
+					c.SetScheme(resource.Scheme)
 				}
 				if err := co.WatchResourceReconcileObject(ctx, c, resource.ObjectType, resource.WatchOptions); err != nil {
 					errChan <- err

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/kubernetes/scheme"
 	"log"
 	"time"
 	"wangguoyan/mc-operator/pkg/job"
@@ -17,6 +18,11 @@ func main() {
 			ObjectType: &corev1.Pod{},
 			Reconciler: &testReconciler{},
 			//Scheme: APi.Scheme, 自定义crd
+		},
+		{
+			ObjectType: &corev1.Pod{},
+			Reconciler: &testReconciler{},
+			Scheme:     scheme.Scheme,
 		},
 	}
 	watchJob, err := job.NewWatchJob(watchResources)
