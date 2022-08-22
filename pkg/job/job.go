@@ -3,7 +3,6 @@ package job
 import (
 	"context"
 	"errors"
-	"github.com/go-logr/logr"
 	"k8s.io/client-go/rest"
 	"wangguoyan/mc-operator/pkg/cluster"
 	"wangguoyan/mc-operator/pkg/controller"
@@ -15,7 +14,7 @@ type WatchJob struct {
 	restClient *rest.RESTClient
 }
 
-func NewWatchJob(res []*WatchResource, logger logr.Logger) (*WatchJob, error) {
+func NewWatchJob(res []*WatchResource) (*WatchJob, error) {
 	if len(res) == 0 {
 		return nil, errors.New("watch resource is empty")
 	}

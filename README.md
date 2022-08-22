@@ -12,10 +12,10 @@ func main() {
 		{
 			ObjectType: &corev1.Pod{},
 			Reconciler: &testReconciler{},
-      //Scheme: APi.Scheme, 自定义crd
+            //Scheme: APi.Scheme, 自定义crd
 		},
 	}
-	watchJob, err := job.NewWatchJob(watchResources, logr.DiscardLogger{})
+	watchJob, err := job.NewWatchJob(watchResources)
 	if err != nil {
 		fmt.Println(err.Error())
 		return

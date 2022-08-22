@@ -23,8 +23,6 @@ import (
 	"wangguoyan/mc-operator/pkg/cluster"
 )
 
-// Request contains the information needed by a multicluster Reconciler to Reconcile:
-// a context, namespace, and name.
 type Request struct {
 	Cluster cluster.ClusterCache
 	types.NamespacedName

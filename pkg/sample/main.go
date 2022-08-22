@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"log"
@@ -17,9 +16,10 @@ func main() {
 		{
 			ObjectType: &corev1.Pod{},
 			Reconciler: &testReconciler{},
+			//Scheme: APi.Scheme, 自定义crd
 		},
 	}
-	watchJob, err := job.NewWatchJob(watchResources, logr.DiscardLogger{})
+	watchJob, err := job.NewWatchJob(watchResources)
 	if err != nil {
 		fmt.Println(err.Error())
 		return
