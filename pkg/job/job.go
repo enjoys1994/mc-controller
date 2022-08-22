@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"k8s.io/client-go/rest"
+	"k8s.io/klog/v2"
 	"wangguoyan/mc-operator/pkg/cluster"
 	"wangguoyan/mc-operator/pkg/controller"
 	"wangguoyan/mc-operator/pkg/manager"
@@ -32,9 +33,8 @@ func (w *WatchJob) StartResourceWatch(clusters ...ClusterInfoInterface) context.
 func (w *WatchJob) doResourceWatch(clusterInfos ...ClusterInfoInterface) context.CancelFunc {
 	ctx, cancel := context.WithCancel(context.Background())
 	errChan := make(chan error)
-	// 因为mgr start方法为阻塞方法，所以需要启动协程执行
-	mgr := manager.New()
 
+	mgr := manager.New()
 	go func() {
 		// 遍历需要监听的列表
 		for i := range w.resources {
@@ -42,7 +42,6 @@ func (w *WatchJob) doResourceWatch(clusterInfos ...ClusterInfoInterface) context
 			co := controller.New(resource.Reconciler, controller.Options{})
 			for i := range clusterInfos {
 				c := cluster.New(clusterInfos[i].GetClusterName(), GetCfgByClusterInfo(clusterInfos[i]), cluster.Options{})
-				//如果自定义scheme 需要不通的cluster
 				if resource.Scheme != nil {
 					c.SetScheme(resource.Scheme)
 				}
@@ -53,8 +52,9 @@ func (w *WatchJob) doResourceWatch(clusterInfos ...ClusterInfoInterface) context
 			}
 			mgr.AddController(co)
 		}
-		err := mgr.Start(ctx)
-		errChan <- err
+		if err := mgr.Start(ctx); err != nil {
+			klog.Errorf("start controller failed, err :%s", err.Error())
+		}
 	}()
 	return cancel
 }

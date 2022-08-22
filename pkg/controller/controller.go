@@ -153,8 +153,6 @@ func (c *Controller) WatchResource(ctx context.Context, cluster cluster.ClusterC
 	return cluster.AddEventHandler(ctx, objectType, h)
 }
 
-// TODO: watch channel
-
 // GetCaches gets the current set of clusters (which implement manager.Cache) watched by the Controller.
 // Manager uses this to ensure the necessary caches are started and synced before it starts the Controller.
 func (c *Controller) GetCaches() []manager.Cache {
