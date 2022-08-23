@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	"log"
@@ -32,12 +33,17 @@ func main() {
 	}
 
 	// 监听指定集群
-	cancelFunc := watchJob.StartResourceWatch(job.NewClusterDefault("test"))
+	_ = watchJob.StartResourceWatch(job.NewClusterDefault("test"), job.NewClusterDefault("test2"))
 	go func() {
-		time.Sleep(5 * time.Second)
-		cancelFunc()
+		time.Sleep(15 * time.Second)
+		// 停止监听指定集群
+		watchJob.StopResourceWatch(job.NewClusterDefault("test"))
+		go func() {
+			time.Sleep(15 * time.Second)
+			watchJob.StopResourceWatch(job.NewClusterDefault("test2"))
+		}()
 	}()
-	time.Sleep(31 * time.Second)
+	time.Sleep(10000000 * time.Second)
 }
 
 type testReconciler struct {
@@ -50,7 +56,7 @@ func (r *testReconciler) Reconcile(req reconcile.Request) (reconcile.Result, err
 		Namespace: req.Namespace,
 		Name:      req.Name,
 	}, pod)
-	if err != nil {
+	if err != nil && !errors.IsNotFound(err) {
 		return reconcile.Result{}, err
 	}
 	log.Printf("%s / %s /%s /%s", req.Cluster.GetClusterName(), pod.GetName(), pod.GetNamespace(), pod.UID)

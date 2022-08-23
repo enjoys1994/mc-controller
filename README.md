@@ -5,12 +5,16 @@ A Go library for building Kubernetes controllers that need to watch resources in
 ## Usage 
 
   ```
-func main() {
-	watchResources := []*job.WatchResource{
+watchResources := []*job.WatchResource{
 		{
 			ObjectType: &corev1.Pod{},
 			Reconciler: &testReconciler{},
-                       //Scheme: APi.Scheme, 自定义crd需要自己设置scheme
+			//Scheme: APi.Scheme, 自定义crd
+		},
+		{
+			ObjectType: &corev1.Pod{},
+			Reconciler: &testReconciler{},
+			Scheme:     scheme.Scheme,
 		},
 	}
 	watchJob, err := job.NewWatchJob(watchResources)
@@ -20,13 +24,17 @@ func main() {
 	}
 
 	// 监听指定集群
-	cancelFunc := watchJob.StartResourceWatch(job.NewClusterDefault("test"))
+	_ = watchJob.StartResourceWatch(job.NewClusterDefault("test"), job.NewClusterDefault("test2"))
 	go func() {
-		time.Sleep(5 * time.Second)
-		cancelFunc()
+		time.Sleep(15 * time.Second)
+		// 停止监听指定集群
+		watchJob.StopResourceWatch(job.NewClusterDefault("test"))
+		go func() {
+			time.Sleep(15 * time.Second)
+			watchJob.StopResourceWatch(job.NewClusterDefault("test2"))
+		}()
 	}()
-	time.Sleep(31 * time.Second)
-}
+	time.Sleep(10000000 * time.Second)
 
 type testReconciler struct {
 }
