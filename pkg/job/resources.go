@@ -14,6 +14,7 @@ type WatchResource struct {
 	ObjectType   client.Object
 	Scheme       *runtime.Scheme
 	Reconciler   reconcile.Reconciler
+	Owner        client.Object
 	WatchOptions controller.WatchOptions
 }
 

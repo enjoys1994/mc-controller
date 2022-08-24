@@ -5,6 +5,7 @@ import (
 	"errors"
 	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
+	"sync"
 	"wangguoyan/mc-operator/pkg/cluster"
 	"wangguoyan/mc-operator/pkg/controller"
 	"wangguoyan/mc-operator/pkg/manager"
@@ -12,19 +13,15 @@ import (
 )
 
 type WatchJob struct {
-	resources  []*WatchResource
-	restClient *rest.RESTClient
-	mgrs       util.ThreadSafeMap
-	ctx        context.Context
-	cancel     context.CancelFunc
-	contexts   util.ThreadSafeMap
-	cancels    util.ThreadSafeMap
-	//hooks      []hook
+	resources   []*WatchResource
+	restClient  *rest.RESTClient
+	mgrs        util.ThreadSafeMap
+	ctx         context.Context
+	cancel      context.CancelFunc
+	contexts    util.ThreadSafeMap
+	cancels     util.ThreadSafeMap
+	failedHooks []func(clusterName string, err error)
 }
-
-//type hook struct {
-//	handle func(clusterName string, err error)
-//}
 
 func NewWatchJob(res []*WatchResource) (*WatchJob, error) {
 	if len(res) == 0 {
@@ -36,16 +33,18 @@ func NewWatchJob(res []*WatchResource) (*WatchJob, error) {
 	return watchJob, nil
 }
 
-//func (w *WatchJob) AddFailOrStopRollBack(handlers ...hook) *WatchJob {
-//	for i := range handlers {
-//
-//	}
-//
-//	return w
-//}
+func (w *WatchJob) AddFailedRollBack(f ...func(clusterName string, err error)) *WatchJob {
+	for i := range f {
+		w.failedHooks = append(w.failedHooks, f[i])
+	}
+	return w
+}
 
-func (w *WatchJob) StartResourceWatch(clusters ...ClusterInfoInterface) context.CancelFunc {
-	return w.doResourceWatch(clusters...)
+func (w *WatchJob) StartResourceWatch(clusters ...ClusterInfoInterface) {
+	if clusters == nil || len(clusters) == 0 {
+		klog.Errorf("cluster should be nil")
+	}
+	w.doResourceWatch(clusters...)
 }
 
 func (w *WatchJob) StopResourceWatch(clusters ...ClusterInfoInterface) {
@@ -88,10 +87,11 @@ func (w *WatchJob) getMgrByClusterName(name string) *manager.Manager {
 }
 
 // 创建并启动指定集群监听
-func (w *WatchJob) doResourceWatch(clusterInfos ...ClusterInfoInterface) context.CancelFunc {
+func (w *WatchJob) doResourceWatch(clusterInfos ...ClusterInfoInterface) {
 	w.ctx, w.cancel = context.WithCancel(context.Background())
 
-	errChan := make(chan error)
+	waitGroup := sync.WaitGroup{}
+	waitGroup.Add(len(clusterInfos))
 	go func() {
 		// 遍历需要监听的列表
 		for i := range w.resources {
@@ -103,8 +103,11 @@ func (w *WatchJob) doResourceWatch(clusterInfos ...ClusterInfoInterface) context
 					c.SetScheme(resource.Scheme)
 				}
 				if err := co.WatchResourceReconcileObject(w.getCtxForClusterName(c.GetClusterName()), c, resource.ObjectType, resource.WatchOptions); err != nil {
-					errChan <- err
-					return
+					for i := range w.failedHooks {
+						w.failedHooks[i](c.GetClusterName(), err)
+					}
+					waitGroup.Done()
+					continue
 				}
 				w.getMgrByClusterName(c.GetClusterName()).AddController(co)
 			}
@@ -113,10 +116,15 @@ func (w *WatchJob) doResourceWatch(clusterInfos ...ClusterInfoInterface) context
 			go func() {
 				if err := value.(*manager.Manager).Start(w.getCtxForClusterName(key.(string))); err != nil {
 					klog.Errorf("start controller failed, err :%s", err.Error())
+					for i := range w.failedHooks {
+						w.failedHooks[i](key.(string), err)
+					}
 				}
+				waitGroup.Done()
 			}()
 			return true
 		})
 	}()
-	return w.cancel
+
+	waitGroup.Wait()
 }

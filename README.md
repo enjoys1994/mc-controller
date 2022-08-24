@@ -5,7 +5,9 @@ A Go library for building Kubernetes controllers that need to watch resources in
 ## Usage 
 
   ```
-watchResources := []*job.WatchResource{
+
+func main() {
+	watchResources := []*job.WatchResource{
 		{
 			ObjectType: &corev1.Pod{},
 			Reconciler: &testReconciler{},
@@ -22,9 +24,10 @@ watchResources := []*job.WatchResource{
 		fmt.Println(err.Error())
 		return
 	}
-
+	watchJob.AddFailedRollBack(func(clusterName string, err error) {
+		klog.Infof("cluster %s watch error : %s", clusterName, err.Error())
+	})
 	// 监听指定集群
-	_ = watchJob.StartResourceWatch(job.NewClusterDefault("test"), job.NewClusterDefault("test2"))
 	go func() {
 		time.Sleep(15 * time.Second)
 		// 停止监听指定集群
@@ -34,7 +37,8 @@ watchResources := []*job.WatchResource{
 			watchJob.StopResourceWatch(job.NewClusterDefault("test2"))
 		}()
 	}()
-	time.Sleep(10000000 * time.Second)
+	watchJob.StartResourceWatch(job.NewClusterDefault("test"), job.NewClusterWithCfg("test2", ctl.GetConfigOrDie()))
+}
 
 type testReconciler struct {
 }
@@ -46,7 +50,7 @@ func (r *testReconciler) Reconcile(req reconcile.Request) (reconcile.Result, err
 		Namespace: req.Namespace,
 		Name:      req.Name,
 	}, pod)
-	if err != nil {
+	if err != nil && !errors.IsNotFound(err) {
 		return reconcile.Result{}, err
 	}
 	log.Printf("%s / %s /%s /%s", req.Cluster.GetClusterName(), pod.GetName(), pod.GetNamespace(), pod.UID)

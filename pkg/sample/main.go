@@ -7,7 +7,9 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/klog/v2"
 	"log"
+	ctl "sigs.k8s.io/controller-runtime"
 	"time"
 	"wangguoyan/mc-operator/pkg/job"
 	"wangguoyan/mc-operator/pkg/reconcile"
@@ -31,9 +33,10 @@ func main() {
 		fmt.Println(err.Error())
 		return
 	}
-
+	watchJob.AddFailedRollBack(func(clusterName string, err error) {
+		klog.Infof("cluster %s watch error : %s", clusterName, err.Error())
+	})
 	// 监听指定集群
-	_ = watchJob.StartResourceWatch(job.NewClusterDefault("test"), job.NewClusterDefault("test2"))
 	go func() {
 		time.Sleep(15 * time.Second)
 		// 停止监听指定集群
@@ -43,7 +46,7 @@ func main() {
 			watchJob.StopResourceWatch(job.NewClusterDefault("test2"))
 		}()
 	}()
-	time.Sleep(10000000 * time.Second)
+	watchJob.StartResourceWatch(job.NewClusterDefault("test"), job.NewClusterWithCfg("test2", ctl.GetConfigOrDie()))
 }
 
 type testReconciler struct {
