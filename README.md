@@ -26,7 +26,7 @@ func main() {
 	watchJob.AddFailedRollBack(func(clusterName string, err error) {
 		klog.Infof("cluster %s watch error : %s", clusterName, err.Error())
 	})
-	// 监听指定集群
+
 	go func() {
 		time.Sleep(15 * time.Second)
 		// 停止监听指定集群
@@ -36,6 +36,7 @@ func main() {
 			watchJob.StopResourceWatch(job.NewClusterDefault("test2"))
 		}()
 	}()
+	// 开始监听指定集群
 	watchJob.StartResourceWatch(job.NewClusterDefault("test"), job.NewClusterDefault("test2"))
 }
 
