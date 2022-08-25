@@ -3,14 +3,13 @@ package main
 import (
 	"context"
 	"fmt"
-	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/klog/v2"
 	"log"
-	ctl "sigs.k8s.io/controller-runtime"
 	"time"
+	"wangguoyan/mc-operator/pkg/controller"
 	"wangguoyan/mc-operator/pkg/job"
 	"wangguoyan/mc-operator/pkg/reconcile"
 )
@@ -18,14 +17,13 @@ import (
 func main() {
 	watchResources := []*job.WatchResource{
 		{
-			ObjectType: &corev1.Pod{},
+			ObjectType: &v1.Deployment{},
 			Reconciler: &testReconciler{},
 			//Scheme: APi.Scheme, 自定义crd
-		},
-		{
-			ObjectType: &corev1.Pod{},
-			Reconciler: &testReconciler{},
-			Scheme:     scheme.Scheme,
+			Owner: &job.Owner{
+				ObjectType:   &v1.ReplicaSet{},
+				WatchOptions: controller.WatchOptions{},
+			},
 		},
 	}
 	watchJob, err := job.NewWatchJob(watchResources)
@@ -46,7 +44,7 @@ func main() {
 			watchJob.StopResourceWatch(job.NewClusterDefault("test2"))
 		}()
 	}()
-	watchJob.StartResourceWatch(job.NewClusterDefault("test"), job.NewClusterWithCfg("test2", ctl.GetConfigOrDie()))
+	watchJob.StartResourceWatch(job.NewClusterDefault("test"), job.NewClusterDefault("test2"))
 }
 
 type testReconciler struct {
@@ -54,14 +52,17 @@ type testReconciler struct {
 
 func (r *testReconciler) Reconcile(req reconcile.Request) (reconcile.Result, error) {
 
-	pod := &corev1.Pod{}
+	obj := &v1.Deployment{}
 	err := req.GetClient().Get(context.TODO(), types.NamespacedName{
 		Namespace: req.Namespace,
 		Name:      req.Name,
-	}, pod)
-	if err != nil && !errors.IsNotFound(err) {
+	}, obj)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return reconcile.Result{}, nil
+		}
 		return reconcile.Result{}, err
 	}
-	log.Printf("%s / %s /%s /%s", req.Cluster.GetClusterName(), pod.GetName(), pod.GetNamespace(), pod.UID)
+	log.Printf("%s / %s /%s /%s", req.Cluster.GetClusterName(), obj.GetName(), obj.GetNamespace(), obj.UID)
 	return reconcile.Result{}, nil
 }

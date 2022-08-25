@@ -102,12 +102,25 @@ func (w *WatchJob) doResourceWatch(clusterInfos ...ClusterInfoInterface) {
 				if resource.Scheme != nil {
 					c.SetScheme(resource.Scheme)
 				}
-				if err := co.WatchResourceReconcileObject(w.getCtxForClusterName(c.GetClusterName()), c, resource.ObjectType, resource.WatchOptions); err != nil {
-					for i := range w.failedHooks {
-						w.failedHooks[i](c.GetClusterName(), err)
+				var err error
+				if resource.Owner != nil {
+					kinds, _, _ := c.GetScheme().ObjectKinds(resource.ObjectType)
+					if err = co.WatchResourceReconcileOwner(w.getCtxForClusterName(c.GetClusterName()), c, kinds[0], resource.Owner.ObjectType, resource.Owner.WatchOptions); err != nil {
+						for i := range w.failedHooks {
+							w.failedHooks[i](c.GetClusterName(), err)
+						}
+						waitGroup.Done()
+						continue
 					}
-					waitGroup.Done()
-					continue
+				}
+				if err == nil {
+					if err = co.WatchResourceReconcileObject(w.getCtxForClusterName(c.GetClusterName()), c, resource.ObjectType, resource.WatchOptions); err != nil {
+						for i := range w.failedHooks {
+							w.failedHooks[i](c.GetClusterName(), err)
+						}
+						waitGroup.Done()
+						continue
+					}
 				}
 				w.getMgrByClusterName(c.GetClusterName()).AddController(co)
 			}

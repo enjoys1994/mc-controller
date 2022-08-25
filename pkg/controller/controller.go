@@ -19,6 +19,7 @@ package controller // import "orcastack.io/common/watch-operator/pkg/controller"
 
 import (
 	"context"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"log"
 	"os"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -136,6 +137,11 @@ func (o WatchOptions) Filter(obj interface{}) bool {
 	}
 
 	return true
+}
+
+func (c *Controller) WatchResourceReconcileOwner(ctx context.Context, cluster cluster.ClusterCache, groupVersionKind schema.GroupVersionKind, owner client.Object, ownerWatchOption WatchOptions) error {
+	h := &handler.EnqueueRequestForOwner{Cluster: cluster, Queue: c.Queue, GroupVersionKind: groupVersionKind, Filter: ownerWatchOption.Filter, Predicates: ownerWatchOption.Predicates}
+	return c.WatchResource(ctx, cluster, owner, h)
 }
 
 // WatchResourceReconcileObject configures the Controller to watch resources of the same Kind as objectType,
