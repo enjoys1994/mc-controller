@@ -17,10 +17,10 @@ limitations under the License.
 package reconcile
 
 import (
+	"github.com/wangguoyan/mc-operator/pkg/cluster"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"wangguoyan/mc-operator/pkg/cluster"
 )
 
 type Request struct {

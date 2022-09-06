@@ -3,15 +3,15 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/wangguoyan/mc-operator/pkg/controller"
+	"github.com/wangguoyan/mc-operator/pkg/job"
+	"github.com/wangguoyan/mc-operator/pkg/reconcile"
 	v1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/klog/v2"
 	"log"
 	"time"
-	"wangguoyan/mc-operator/pkg/controller"
-	"wangguoyan/mc-operator/pkg/job"
-	"wangguoyan/mc-operator/pkg/reconcile"
 )
 
 func main() {

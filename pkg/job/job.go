@@ -3,13 +3,13 @@ package job
 import (
 	"context"
 	"errors"
+	"github.com/wangguoyan/mc-operator/pkg/cluster"
+	"github.com/wangguoyan/mc-operator/pkg/controller"
+	"github.com/wangguoyan/mc-operator/pkg/manager"
+	"github.com/wangguoyan/mc-operator/pkg/util"
 	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
 	"sync"
-	"wangguoyan/mc-operator/pkg/cluster"
-	"wangguoyan/mc-operator/pkg/controller"
-	"wangguoyan/mc-operator/pkg/manager"
-	"wangguoyan/mc-operator/pkg/util"
 )
 
 type WatchJob struct {

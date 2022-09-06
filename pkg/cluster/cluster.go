@@ -20,8 +20,8 @@ package cluster
 
 import (
 	"context"
+	"github.com/wangguoyan/mc-operator/pkg/manager"
 	"time"
-	"wangguoyan/mc-operator/pkg/manager"
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"

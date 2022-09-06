@@ -1,12 +1,12 @@
 package job
 
 import (
+	"github.com/wangguoyan/mc-operator/pkg/controller"
+	"github.com/wangguoyan/mc-operator/pkg/reconcile"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
 	ctl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"wangguoyan/mc-operator/pkg/controller"
-	"wangguoyan/mc-operator/pkg/reconcile"
 )
 
 // WatchResource 监听资源，包括类型和监听方法

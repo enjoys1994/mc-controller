@@ -17,14 +17,14 @@ limitations under the License.
 package handler
 
 import (
+	"github.com/wangguoyan/mc-operator/pkg/cluster"
+	"github.com/wangguoyan/mc-operator/pkg/reconcile"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
-	"wangguoyan/mc-operator/pkg/cluster"
-	"wangguoyan/mc-operator/pkg/reconcile"
 )
 
 type EnqueueRequestForObject struct {

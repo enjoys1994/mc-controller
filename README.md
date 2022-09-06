@@ -2,6 +2,13 @@
 A Go library for building Kubernetes controllers that need to watch resources in multiple clusters.
 
 
+## Installation
+ ```
+ $ go get github.com/wangguoyan/mc-controller@v1.0.1
+ 
+  ```
+
+
 ## Usage 
 
   ```
@@ -61,4 +68,3 @@ func (r *testReconciler) Reconcile(req reconcile.Request) (reconcile.Result, err
 }
 
   ```
-   

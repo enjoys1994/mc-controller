@@ -17,6 +17,8 @@ limitations under the License.
 package handler
 
 import (
+	"github.com/wangguoyan/mc-operator/pkg/cluster"
+	"github.com/wangguoyan/mc-operator/pkg/reconcile"
 	"k8s.io/apimachinery/pkg/api/meta"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -25,8 +27,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
-	"wangguoyan/mc-operator/pkg/cluster"
-	"wangguoyan/mc-operator/pkg/reconcile"
 )
 
 type EnqueueRequestForOwner struct {
